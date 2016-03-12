@@ -220,12 +220,13 @@ Welcome page.
 
 On RHEL, the Security layer (Security-Enhanced Linux) will prohibit 
 Apache to initiate an "outbound" connection, even to localhost! 
-To disable this:
+If SELinux is not enabled on your system, you can skip this. Othersilde,
+To enable Apache to connect to a local application fo:
 ```text
-/usr/sbin/setsebool -P httpd_can_network_connect 1
+sudo /usr/sbin/setsebool -P httpd_can_network_connect 1
 ```
-The "-P" above makes this setting permanent.  (Thanks a million to Justin
-Ellison for your post on [SysAdmin's
+The "-P" above makes this setting permanent.  (Thanks to Justin
+Ellison for his post on [SysAdmin's
 Journey](http://sysadminsjourney.com/content/2010/02/01/apache-modproxy-error-13permission-denied-error-rhel/).
 
 
@@ -240,15 +241,15 @@ ROOT_URL=http://databet.ics.hawaii.edu/my_meteor_app
 
 We want to tell Apache that whenever a Web browser points to the $ROOT_URL above, content
 should come from Meteor on port 1234.  This is accomplished by adding the following to the
-Apache config file:
+end of the Apache config file _/etc/httpd/conf/httpd.conf_:
 ```
+<VirtualHost *:80>
 	ProxyPreserveHost On
 	ProxyRequests     Off Order deny,allow Allow from all
-	ProxyPass /my_meteory_app http://localhost:4000/my_meteory_app
-	ProxyPassReverse /my_meteory_app http://localhost:4000/my_meteory_app
+	ProxyPass /my_meteory_app http://localhost:1234/my_meteory_app
+	ProxyPassReverse /my_meteory_app http://localhost:1234/my_meteory_app
+</VirtualHost>
 ```
-As root, add these 4 lines inside a <VirtualHost *:80> </VirtualHost> tag at the end of file
-_/etc/httpd/conf/httpd.conf_. 
 
 Start the Meteor app as in the previous section (with the PORT and METEOR_URL 
 set). Then, in another shell, restart the apache service:
@@ -258,7 +259,7 @@ set). Then, in another shell, restart the apache service:
 
 
 At this point, on your own machine, you should be able to start a Web browser, go
-to URL http://databet.ics.hawaii.edu/my_meteor_app/  and see the Meteor app running!
+to URL _http://databet.ics.hawaii.edu/my_meteor_app/_  and see the Meteor app running!
 
 
 ---
@@ -283,17 +284,18 @@ We'll run the service as a particular user (not root), to avoid problems. So let
 ```text
 	sudo adduser my_meteor_app
 ```	
-Then, let's create a meteor group:
+Then, let's create a my_meteor_app group:
 ```text
-	sudo groupadd meteor
+	sudo groupadd my_meteor_app
 ```
 and finally let's add our user to it:
 ```text
-	usermod -a -G meteor my_meteor_app
+	usermod -a -G my_meteor_app my_meteor_app
 ```
 
-#### Install npm forever
+#### Install forever via nmp
 
+Forever is a useful program to run Node applications as daemons:
 ```text
 sudo npm -g install forever
 ```
@@ -308,26 +310,177 @@ do this.  This requires a preliminary steps:
   for our init.d script. Of course it doesn't have to be in _/etc_, but might
   as well. 
 - create a config file in _/etc/meteor_. Let's call this
-file _/etc/meteor/my_meteor_app_. Here is a config file that would work for
-our example in previous sections:
+file _/etc/meteor/my_meteor_app.conf_. Here is a config file that would work for
+our example in previous sections, with additional paths useful for the init.d
+script:
 
 ```shell
-PORT=1234
-MONGO_URL=mongodb://localhost:27017
-ROOT_URL=http://databet.ics.hawaii.edu/my_meteor_app
-METEOR_SETTINGS=$(cat /etc/meteor/my_meteor_appsettings.real.json)
-UPLOAD_DIR=/home/my_meteor_app/uploads
-METEOR_MAINJS_PATH=/home/john/bundle/main.js
+###################################################
+## For the init.d script
+###################################################
+export METEOR_USER=my_meteor_app
+export METEOR_GROUP=my_meteor_app
+export METEOR_ROOT=/home/john/
+
+###################################################
+## For the Meteor APP
+###################################################
+export PORT=1234
+export MONGO_URL=mongodb://localhost:27017
+export ROOT_URL=http://databet.ics.hawaii.edu/divelog_manager
+export METEOR_SETTINGS=$(cat $METEOR_ROOT/settings.real.json)
+export UPLOAD_DIR=$METEOR_ROOT/file_uploads
+
 ```
 
-Note the last variable above, which simply says where your main.js is. 
+The last 3 variables above provide path to the JSON settings file, the directory for
+storing files uploaded via tomi:meteor-uploads, and the path to the main.js file in the 
+bundle. The my_meteor_app user must have the appropriate read/write permissions to those
+locations of course. 
 
+At this point, we're ready for creating the _/etc/init.d/my_meteor_app_
+script. Here is an example that should be adapted to your environment.  In 
+particular, note that PIDFILE, LOCKFILE, and LOGFILE variables. These have to
+point to locations that can be read/written by user my_meteor_app.
 
-At this point, we're ready for the _/etc/init.d/my_meteor_app_ script. Here is an example that should
-require very little modification for your own app:
 ```text
-XXXX
+!/bin/bash
+#
+# Startup script for a Meteor app
+#
+# chkconfig: 35 99 99
+#      Run level: 35  (just like MongoDB)
+#      Start order: 99 (late)
+#      Stop order: 10 (early)
+# description: My Meteor app
+
+# Load the helpful functions
+#
+. /etc/rc.d/init.d/functions
+
+# Load the options from the config file
+#
+CONFIGFILE="/etc/meteor/my_meteor_app.conf"
+if [ -f $CONFIGFILE ]; then
+         . $CONFIGFILE
+else
+   echo -n "Cannot find config file $CONFIGFILE" && failure && echo
+   exit 1
+fi
+
+# Set the path to the useful files given the METEOR_ROOT
+METEOR_MAINJS=$METEOR_ROOT/bundle/main.js
+PIDDIR=$METEOR_ROOT/var/run
+PIDFILE=$PIDDIR/my_meteor_app.pid
+LOCKFILE=$METEOR_ROOT/var/lock/my_meteor_app
+LOGDIR=$METEOR_ROOT/var/log
+LOGFILE=$LOGDIR/my_meteor_app.log
+
+
+#
+# Function to check that user is root
+##################################################
+check() {
+  [ "`id -u`" = 0 ] || exit 4
+}
+
+#
+# Function to start the service
+##################################################
+start()
+{
+
+  check     # check that the user is root
+
+  echo -n $"Starting Meteor app...    "
+
+  # Check that no instance is currently running
+  ####
+  LIST=`su - $METEOR_USER -c "forever list" | grep $METEOR_MAINJS | wc -l`
+  [ ! $LIST -eq 0 ] && echo -n "Already running!" && failure && echo && return 1
+
+  # Create a PID dir if not there already
+  ####
+  [ ! -d $PIDDIR ] && install -d -m 0755 -o $METEOR_USER -g $METEOR_GROUP $PIDDIR
+
+  # Create the LOG dir if not there already
+  ####
+  [ ! -d $LOGDIR ] && install -d -m 0755 -o $METEOR_USER -g $METEOR_GROUP $LOGDIR
+
+  # Start the daemons using forever
+  ###
+  BASE_COMMAND="forever start -l $LOGFILE --pidFile $PIDFILE -a $METEOR_MAINJS"
+  COMMAND="source $CONFIGFILE; $BASE_COMMAND"
+  su - $METEOR_USER -c "$COMMAND" 1> /dev/null 2> /dev/null
+  RETVAL=$?
+
+  # Print status and return
+  ###
+  [ $RETVAL -eq 0 ] && touch $LOCKFILE && echo -n "Started!" && success
+  [ ! $RETVAL -eq 0 ] && failure
+  echo
+  return $RETVAL
+}
+
+#
+# Function to stop the service
+######################################################
+stop()
+{
+
+  check     # check that the user is root
+
+  echo -n $"Stopping Meteor app...    "
+
+  # Stopping the service
+  ###
+  su - $METEOR_USER -c "forever stop $METEOR_MAINJS"  1> /dev/null 2> /dev/null
+  RETVAL=$?
+
+  # Print status and return
+  ###
+  [ $RETVAL -eq 0 ] && rm -f $LOCKFILE && echo -n "Stopped!" && success
+  [ ! $RETVAL -eq 0 ] && echo -n "Was not running!" && failure
+  echo
+  return $RETVAL
+}
+
+#
+# Function to restart the service
+#
+restart () {
+  stop
+  start
+}
+
+
+RETVAL=0
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  restart|reload|force-reload)
+    restart
+    ;;
+  condrestart)
+    [ -f $LOCKFILE ] && restart || :
+    ;;
+  status)
+    status meteor_divelog_manager
+    RETVAL=$?
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|status|restart|reload|force-reload|condrestart}"
+    RETVAL=1
+esac
+
+exit $RETVAL
 ```
+
 
 We can now check that the script works:
 ```
@@ -346,5 +499,42 @@ If the above works, then enable autostart:
 ```
 
 At this point, you should be able to always connect to your Meteor application.
+
+---
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
