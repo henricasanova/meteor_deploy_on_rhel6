@@ -5,6 +5,17 @@ Deploying a Meteor App on RHEL 6
 ========
 ---
 
+The Short Story
+-------
+
+- Install Apache, Mongo, Apache, Meteor
+- Build a Meteor bundle of the application
+- Configure Apache to know about the application
+- Make the application a service
+
+
+---
+
 Initial Setup
 --------
 
