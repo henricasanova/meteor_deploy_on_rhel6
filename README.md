@@ -84,25 +84,24 @@ If the above works, then enable autostart:
 ####MongoDB
 
 Based on the information [on this
-site](http://tecadmin.net/install-mongodb-on-centos-rhel-and-fedora/),
-first create the _/etc/yum/repos.d_ directory and a file __mongodb.repo_  in that
-directory:
+site](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-red-hat/),
+first create a _/etc/yum.repos.d/mongodb-org-3.4.repo_  file:
 ```
-	sudo mkdir /etc/yum/repos.d
-	sudo vi /etc/yum/repos.d/mongodb.repo
+	sudo vi /etc/yum.repos.d/mongodb-org-3.4.repo
 ```
 In the file, cut and paste this content and save:
 
 ```text
-	[MongoDB]
-	name=MongoDB Repository
-	baseurl=http://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/3.2/x86_64/
-	gpgcheck=0
-	enabled=1
+[mongodb-org-3.4]
+name=MongoDB Repository
+baseurl=https://repo.mongodb.org/yum/redhat/$releasever/mongodb-org/3.4/x86_64/
+gpgcheck=1
+enabled=1
+gpgkey=https://www.mongodb.org/static/pgp/server-3.4.asc
 ```
 Once that's done, simply type:
 ```text
-	sudo yum install mongodb-org
+	sudo yum install -y mongodb-org
 ```
 which will install MongoDB.  You can then start mongodb:
 ```text
