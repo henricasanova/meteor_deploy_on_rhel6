@@ -192,19 +192,9 @@ To test that the Meteor app is running, you can now do:
 	node main.js
 ```
 
-You should see the Meteor app server running in the terminal. (You can connect to it on the default Meteor port if launching a web browser from the VM, or perhaps directly if you asked ITS to open that port, which as we'll see shortly is not required).  
+You should see the Meteor app server running in the terminal, provided your app finds what it expects in terms of config files and environment variables (PORT, MONGO_URL, ROOT_URL, METEOR_SETTINGS, etc.). You can connect to it on the default Meteor port if launching a web browser from the VM, or perhaps directly if you asked ITS to open that port, which as we'll see shortly is not required.  
 
-Now, this is very bare-bone, and you want to set some useful environment variables before
-running the app. In fact, your app may fail for this reason.  For instance, for DataBET, here are some of the useful variables:
-
-- PORT: This will be the port number the app is listening on
-- MONGO_URL: _mongodb://localhost:27017_
-- ROOT_URL: The custom url of the app, e.g., _http://databet.ics.hawaii.edu/my_meteor_app_
-- METEOR_SETTINGS: Set this to *the content* of the JSON file you are passing to meteor using the --settings flag when running in development mode
-- UPLOAD_DIR: The path to the directory in which uploaded files will be stored
-
-Clearly, you want to write a script to do the above. And in fact, we'll see below that you'll put all that junk
-in pre-defined scripts so as to enable your app as an official service.
+We'll see later how to make all this into a persistent service, but first...
 
 ---
 
@@ -298,6 +288,34 @@ you need to first **uncomment** the following line in http.conf:
 
 Then you simply create multiple VirtualHost sections in http.conf and voila!
 
+If you have more apps than DNS entries, then you can even virst put VirtualHost directives that specify a particular URL path off an existing DNS name to serve a particular app. For instance, here is the config for 3 with ROOT_URL http://localhost:2345/app1, http://localhost:1234, and http://localhost:3000, and accessible at http://dns1.ics.hawaii.edu/app1, http://dns1.ics.hawaii.edu, and http://dns2.ics.hawaii.edu/, respectively.  Switching the order of the first 2 clauses breaks things as then the 2nd app will think that /app1 should served by its own meteor (flow) router. 
+
+```
+<VirtualHost *:80>
+    ServerName dns1.ics.hawaii.edu
+    ProxyPreserveHost On
+    ProxyRequests     Off Order deny,allow Allow from all
+    ProxyPass /app1 http://localhost:2345/app1
+    ProxyPassReverse /app1 http://localhost:2345/app1
+</VirtualHost>
+
+<VirtualHost *:80>
+    ServerName dns1.ics.hawaii.edu
+    ProxyPreserveHost On
+    ProxyRequests     Off Order deny,allow Allow from all
+    ProxyPass / http://localhost:1234/
+    ProxyPassReverse / http://localhost:1234/
+</VirtualHost>
+
+<VirtualHost *:80>
+    ServerName dns2.ics.hawaii.edu
+    ProxyPreserveHost On
+    ProxyRequests     Off Order deny,allow Allow from all
+    ProxyPass / http://localhost:3000/
+    ProxyPassReverse / http://localhost:3000/
+</VirtualHost>
+```
+
 
 ---
 
@@ -364,16 +382,9 @@ export METEOR_ROOT=/home/john/
 ###################################################
 export PORT=1234
 export MONGO_URL=mongodb://localhost:27017
-export ROOT_URL=http://databet.ics.hawaii.edu/divelog_manager
-export METEOR_SETTINGS=$(cat $METEOR_ROOT/settings.real.json)
-export UPLOAD_DIR=$METEOR_ROOT/file_uploads
-
+export ROOT_URL=http://databet.ics.hawaii.edu/my_meteor_app
+# add here other environment variables you may need for your app
 ```
-
-The last 3 variables above provide path to the JSON settings file, the directory for
-storing files uploaded via tomi:meteor-uploads, and the path to the main.js file in the 
-bundle. The my_meteor_app user must have the appropriate read/write permissions to those
-locations of course. 
 
 At this point, we're ready for creating the _/etc/init.d/my_meteor_app_
 script. Here is an example that should be adapted to your environment.  In 
@@ -535,7 +546,7 @@ If the above works, then enable autostart:
 	sudo chkconfig my_meteor_app on
 ```
 
-At this point, you should be able to always connect to your Meteor application.
+At this point, you should be able to always connect to your Meteor application, even after a reboot of the VM.
 
 ---
 
