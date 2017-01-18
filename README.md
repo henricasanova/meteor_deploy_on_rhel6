@@ -166,10 +166,8 @@ called _main.js_, along with two directories (_programs_ and _server_) and two
 other files (_README_ and _star.json_). 
 
 __Warning:__ Errors could be generated above regarding Npm packages that
-need to be installed manually. For instance, for the DataBET app, I had to
-do a "meteor npm install --save babel-runtime highcharts" and a "meteor npm
-install --save autoprefixer" but hand.  The error messages actually tell
-you these commends that you should type. 
+need to be installed manually. The error messages basically tell you
+what command to type to fix this (meteor npm install -save ...).
 
 
 The next step is to an an NMP install of the bundle, i.e., making NodeJS know about the Meteor app:
@@ -202,7 +200,7 @@ running the app:
 - MONGO_URL: _mongodb://localhost:27017_
 - ROOT_URL: The curtom url of the app, e.g., _http://databet.ics.hawaii.edu/my_meteor_app_
 - METEOR_SETTINGS: Set this to *the content* of the JSON file you are passing to meteor using the --settings flag when running in development mode
-- UPLOAD_DIR: The path to the directory in which tomi:meteor-uploads will store files, in case you use that package
+- UPLOAD_DIR: The path to the directory in which uploaded files will be stored
 
 Clearly, you want to write a script to do the above.
 
