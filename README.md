@@ -13,6 +13,9 @@ The Short Story
 - Configure Apache to know about the application
 - Make the application a service
 
+Software version numbers are based on the time this page has
+been last updated. If newer versions are available, update this
+page with whatever has changed.
 
 ---
 
@@ -20,7 +23,8 @@ Initial Setup
 --------
 
 So you god a brand new (virtual) machine running RHEL (Red Hat Enterprise Linux) 6. Let's
-assume your machine has a fixed IP and a DNS entry _databet.ics.hawaii.edu_. 
+assume your machine has a fixed IP and a one or more DNS 
+entry (e.g., _databet.ics.hawaii.edu_). 
 
 The first thing to do is to ssh to the machine and change the root password:
 ```text
@@ -81,7 +85,7 @@ If the above works, then enable autostart:
 ```
 
 
-####MongoDB
+####MongoDB 3.4
 
 Based on the information [on this
 site](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-red-hat/),
@@ -103,9 +107,9 @@ Once that's done, simply type:
 ```text
 	sudo yum install -y mongodb-org
 ```
-which will install MongoDB.  You can then start mongodb:
+which will install MongoDB.  You can then start mongo:
 ```text
-	sudo service mongodb start
+	sudo service mongod start
 ```
 and to make sure it's running (listening on port 27017):
 ```text
@@ -119,20 +123,25 @@ If the above works, then set up autostart on boot:
 ```
 
 
-####NodeJS (0.10)
+####NodeJS (LTS v6.9.4)
 
 Based on the information [on this
-site](https://nodejs.org/en/download/package-manager/), first run:
+site](https://nodejs.org/en/download/package-manager/#enterprise-linux-and-fedora), first run:
 ```text
-	curl --silent --location https://rpm.nodesource.com/setup | sudo bash -	
+	curl --silent --location https://rpm.nodesource.com/setup_6.x | sudo bash -
 ```
 and then install with:
 ```
-	sudo yum install nodejs
+	sudo yum -y install nodejs
 ```		
 It will also be a good idea to install build tools to be abe to use npm stuff:
 ```
 	sudo yum install gcc-c++ make
+```
+
+You can now check that it all works by printing out the node version:
+```
+	node --version
 ```
 
 ####Meteor
