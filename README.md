@@ -290,7 +290,7 @@ to URL _http://databet.ics.hawaii.edu/my_meteor_app/_  and see the Meteor app ru
 
 ##### Serving multiple apps
 If you're using the same host to serve multiple Meteor apps using different domains, the
-you need to first uncomment the following line in http.conf:
+you need to first **uncomment** the following line in http.conf:
 
 ```
 	NameVirtualHost *:80
