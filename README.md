@@ -165,6 +165,13 @@ This takes about 1 minute, and creates a directory called _/home/john/bundle/ th
 called _main.js_, along with two directories (_programs_ and _server_) and two 
 other files (_README_ and _star.json_). 
 
+__Warning:__ Errors could be generated above regarding Npm packages that
+need to be installed manually. For instance, for the DataBET app, I had to
+do a "meteor npm install --save babel-runtime highcharts" and a "meteor npm
+install --save autoprefixer" but hand.  The error messages actually tell
+you these commends that you should type. 
+
+
 The next step is to an an NMP install of the bundle, i.e., making NodeJS know about the Meteor app:
 
 ```
