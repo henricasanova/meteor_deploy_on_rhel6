@@ -253,7 +253,7 @@ sudo /usr/sbin/setsebool -P httpd_can_network_connect 1
 ```
 The "-P" above makes this setting permanent.  (Thanks to Justin
 Ellison for his post on [SysAdmin's
-Journey](http://sysadminsjourney.com/content/2010/02/01/apache-modproxy-error-13permission-denied-error-rhel/).
+Journey](http://sysadminsjourney.com/content/2010/02/01/apache-modproxy-error-13permission-denied-error-rhel/)).
 
 
 ##### Making Apache know about the Meteor app
@@ -272,8 +272,8 @@ end of the Apache config file _/etc/httpd/conf/httpd.conf_:
 <VirtualHost *:80>
 	ProxyPreserveHost On
 	ProxyRequests     Off Order deny,allow Allow from all
-	ProxyPass /my_meteory_app http://localhost:1234/my_meteory_app
-	ProxyPassReverse /my_meteory_app http://localhost:1234/my_meteory_app
+	ProxyPass /my_meteor_app http://localhost:1234/my_meteor_app
+	ProxyPassReverse /my_meteor_app http://localhost:1234/my_meteor_app
 </VirtualHost>
 ```
 
@@ -286,6 +286,17 @@ set). Then, in another shell, restart the apache service:
 
 At this point, on your own machine, you should be able to start a Web browser, go
 to URL _http://databet.ics.hawaii.edu/my_meteor_app/_  and see the Meteor app running!
+
+
+##### Serving multiple apps
+If you're using the same host to serve multiple Meteor apps using different domains, the
+you need to first uncomment the following line in http.conf:
+
+```
+	NameVirtualHost *:80
+```
+
+Then you simply create multiple VirtualHost sections in http.conf and voila!
 
 
 ---
