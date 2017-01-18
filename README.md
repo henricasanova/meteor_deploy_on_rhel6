@@ -192,17 +192,19 @@ To test that the Meteor app is running, you can now do:
 	node main.js
 ```
 
-You should see the Meteor app server running in the terminal. (You can connect to it on the default Meteor port if launching a web browser from the VM, or perhaps directly if you asked ITS to open that port, which as we'll see shortly is not required). 
+You should see the Meteor app server running in the terminal. (You can connect to it on the default Meteor port if launching a web browser from the VM, or perhaps directly if you asked ITS to open that port, which as we'll see shortly is not required).  
 
 Now, this is very bare-bone, and you want to set some useful environment variables before
-running the app: 
+running the app. In fact, your app may fail for this reason.  For instance, for DataBET, here are some of the useful variables:
+
 - PORT: This will be the port number the app is listening on
 - MONGO_URL: _mongodb://localhost:27017_
-- ROOT_URL: The curtom url of the app, e.g., _http://databet.ics.hawaii.edu/my_meteor_app_
+- ROOT_URL: The custom url of the app, e.g., _http://databet.ics.hawaii.edu/my_meteor_app_
 - METEOR_SETTINGS: Set this to *the content* of the JSON file you are passing to meteor using the --settings flag when running in development mode
 - UPLOAD_DIR: The path to the directory in which uploaded files will be stored
 
-Clearly, you want to write a script to do the above.
+Clearly, you want to write a script to do the above. And in fact, we'll see below that you'll put all that junk
+in pre-defined scripts so as to enable your app as an official service.
 
 ---
 
