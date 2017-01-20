@@ -1,5 +1,3 @@
-# meteor_deploy_on_rhel6
-
 
 Deploying a Meteor App on RHEL 6
 ========
@@ -24,7 +22,7 @@ Initial Setup
 
 So you god a brand new (virtual) machine running RHEL (Red Hat Enterprise Linux) 6. Let's
 assume your machine has a fixed IP and a one or more DNS 
-entry (e.g., _databet.ics.hawaii.edu_). 
+entry (e.g., _server1.ics.hawaii.edu_). 
 
 The first thing to do is to ssh to the machine and change the root password:
 ```text
@@ -192,7 +190,7 @@ To test that the Meteor app is running, you can now do:
 	node main.js
 ```
 
-You should see the Meteor app server running in the terminal, provided your app finds what it expects in terms of config files and environment variables (PORT, MONGO_URL, ROOT_URL, METEOR_SETTINGS, etc.). You can connect to it on the default Meteor port if launching a web browser from the VM, or perhaps directly if you asked ITS to open that port, which as we'll see shortly is not required.  
+You should see the Meteor app server running in the terminal, provided your app finds what it expects in terms of config files and environment variables (PORT, MONGO_URL, ROOT_URL, METEOR_SETTINGS). You can connect to it on the default Meteor port if launching a web browser from the VM, or perhaps directly if you asked ITS to open that port, which as we'll see shortly is not required.  
 
 We'll see later how to make all this into a persistent service, but first...
 
@@ -229,7 +227,7 @@ sudo service httpd restart
 ```
 
 Using a Web browser anywhere, you should now be able to go to
-_http://databet.ics.hawaii.edu_ and see some default Apache
+_http://server1.ics.hawaii.edu_ and see some default Apache
 Welcome page.
 
 ##### Making it so that Apache can connect to your Meteor app
@@ -249,72 +247,79 @@ Journey](http://sysadminsjourney.com/content/2010/02/01/apache-modproxy-error-13
 ##### Making Apache know about the Meteor app
 
 
-Let's use the setting in the previous section:
+Let's use the setting in the previous section os that the URL will look to
+the user as:
 ```
-PORT=1234
-ROOT_URL=http://databet.ics.hawaii.edu/my_meteor_app
+http://server1.ics.hawaii.edu/my_meteor_app
+```
+and the application is in fact running at:
+```
+http://localhost:1234/my_meteor_app
 ```
 
-We want to tell Apache that whenever a Web browser points to the $ROOT_URL above, content
-should come from Meteor on port 1234.  This is accomplished by adding the following to the
-end of the Apache config file _/etc/httpd/conf/httpd.conf_:
+This is accomplished by adding the following to (the
+end of) the Apache config file _/etc/httpd/conf/httpd.conf_:
 ```
 <VirtualHost *:80>
-	ProxyPreserveHost On
-	ProxyRequests     Off Order deny,allow Allow from all
-	ProxyPass /my_meteor_app http://localhost:1234/my_meteor_app
-	ProxyPassReverse /my_meteor_app http://localhost:1234/my_meteor_app
+        ServerName server1.ics.hawaii.edu
+        ProxyPreserveHost On
+        ProxyRequests     Off Order deny,allow Allow from all
+
+        <Location />
+                ProxyPass http://localhost:1234/my_meteor_app
+                ProxyPassReverse http://localhost:1234/my_meteor_app
+        </Location>
 </VirtualHost>
 ```
 
-Start the Meteor app as in the previous section (with the PORT and METEOR_URL 
-set). Then, in another shell, restart the apache service:
-```
-	sudo service httpd restart	
-```
-
-
-At this point, on your own machine, you should be able to start a Web browser, go
-to URL _http://databet.ics.hawaii.edu/my_meteor_app/_  and see the Meteor app running!
-
-
 ##### Serving multiple apps
-If you're using the same host to serve multiple Meteor apps using different domains, the
+If you're using the same host to serve multiple Meteor apps using different domains (in case
+you have multiple DNS entries) and/or URL paths, then
 you need to first **uncomment** the following line in http.conf:
 
 ```
 	NameVirtualHost *:80
 ```
 
-Then you simply create multiple VirtualHost sections in http.conf and voila!
+Then you simply create multiple VirtualHost sections in http.conf and voila! Here is
+an example that does:
 
-If you have more apps than DNS entries, then you can even virst put VirtualHost directives that specify a particular URL path off an existing DNS name to serve a particular app. For instance, here is the config for 3 with ROOT_URL http://localhost:2345/app1, http://localhost:1234, and http://localhost:3000, and accessible at http://dns1.ics.hawaii.edu/app1, http://dns1.ics.hawaii.edu, and http://dns2.ics.hawaii.edu/, respectively.  Switching the order of the first 2 clauses breaks things as then the 2nd app will think that /app1 should served by its own meteor (flow) router. 
+- Serve http://localhost:1111 as server1.ics.hawaii.edu/
+- Serve http://localhost:2222 as server1.ics.hawaii.edu/some_app
+- Serve http://localhost:3333 as server2.ics.hawaii.edu/
+
 
 ```
 <VirtualHost *:80>
-    ServerName dns1.ics.hawaii.edu
-    ProxyPreserveHost On
-    ProxyRequests     Off Order deny,allow Allow from all
-    ProxyPass /app1 http://localhost:2345/app1
-    ProxyPassReverse /app1 http://localhost:2345/app1
+        ServerName server1.ics.hawaii.edu
+        ProxyPreserveHost On
+        ProxyRequests     Off Order deny,allow Allow from all
+
+        <Location /some_app>
+                ProxyPass http://localhost:2222/divelog_manager
+                ProxyPassReverse http://localhost:2222/divelog_manager
+        </Location>
+
+        <Location />
+                ProxyPass http://localhost:1111/
+                ProxyPassReverse http://localhost:1111/
+        </Location>
 </VirtualHost>
 
 <VirtualHost *:80>
-    ServerName dns1.ics.hawaii.edu
-    ProxyPreserveHost On
-    ProxyRequests     Off Order deny,allow Allow from all
-    ProxyPass / http://localhost:1234/
-    ProxyPassReverse / http://localhost:1234/
-</VirtualHost>
+        ServerName server2.ics.hawaii.edu
+        ProxyPreserveHost On
+        ProxyRequests     Off Order deny,allow Allow from all
 
-<VirtualHost *:80>
-    ServerName dns2.ics.hawaii.edu
-    ProxyPreserveHost On
-    ProxyRequests     Off Order deny,allow Allow from all
-    ProxyPass / http://localhost:3000/
-    ProxyPassReverse / http://localhost:3000/
+        <Location />
+                ProxyPass http://localhost:3333/
+                ProxyPassReverse http://localhost:3333/
+        </Location>
 </VirtualHost>
 ```
+
+Switching the order of the 2 Location clauses in the first VirtualHost
+clause breaks things!
 
 
 ---
@@ -345,7 +350,7 @@ Then, let's create a my_meteor_app group:
 ```
 and finally let's add our user to it:
 ```text
-	usermod -a -G my_meteor_app my_meteor_app
+	sudo usermod -a -G my_meteor_app my_meteor_app
 ```
 
 #### Install forever via nmp
