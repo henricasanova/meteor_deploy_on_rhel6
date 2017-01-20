@@ -20,7 +20,7 @@ page with whatever has changed.
 Initial Setup
 --------
 
-So you god a brand new (virtual) machine running RHEL (Red Hat Enterprise Linux) 6. Let's
+So you got a brand new (virtual) machine running RHEL (Red Hat Enterprise Linux) 6. Let's
 assume your machine has a fixed IP and a one or more DNS 
 entry (e.g., _server1.ics.hawaii.edu_). 
 
@@ -120,6 +120,9 @@ If the above works, then set up autostart on boot:
 	sudo chkconfig mongod on
 ```
 
+**Warning:** If you plan to run multiple Meteor applications
+on your server, you'll have to run multiple Mongo instances
+as well to avoid DB collisions!
 
 ####NodeJS (LTS v6.9.4)
 
@@ -157,6 +160,7 @@ Building the Meteor Bundle
 Let us assume the Meteor app is in a directory _/home/john/meteor_app_ (i.e., this directory has the directories named client, server, public, etc.). Typically, this directory would be checked out from some github. Building the bundle in /home/john/ is easy:
 ```
 	cd /home/john/meteor_app/
+	cd app/
 	meteor build --directory /home/john
 ```
 This takes about 1 minute, and creates a directory called _/home/john/bundle/ that contains a file
@@ -246,6 +250,13 @@ Journey](http://sysadminsjourney.com/content/2010/02/01/apache-modproxy-error-13
 
 ##### Making Apache know about the Meteor app
 
+First, let's **uncomment** the following line in _/etc/httpd/conf/httpd.conf_:
+
+```
+	NameVirtualHost *:80
+```
+
+
 
 Let's use the setting in the previous section os that the URL will look to
 the user as:
@@ -275,13 +286,7 @@ end of) the Apache config file _/etc/httpd/conf/httpd.conf_:
 ##### Serving multiple apps
 If you're using the same host to serve multiple Meteor apps using different domains (in case
 you have multiple DNS entries) and/or URL paths, then
-you need to first **uncomment** the following line in http.conf:
-
-```
-	NameVirtualHost *:80
-```
-
-Then you simply create multiple VirtualHost sections in http.conf and voila! Here is
+you simply create multiple VirtualHost sections in http.conf and voila! Here is
 an example that does:
 
 - Serve http://localhost:1111 as server1.ics.hawaii.edu/
