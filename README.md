@@ -126,6 +126,9 @@ as well to avoid DB collisions!
 
 ####NodeJS (LTS v6.9.4)
 
+**WARNING**  At this time this is written, with Meteor 1.4, you want to stay with NodeJs v4.x. Otherwise, you may
+             experience super-high CPU load on your VM. 
+
 Based on the information [on this
 site](https://nodejs.org/en/download/package-manager/#enterprise-linux-and-fedora), first run:
 ```text
@@ -144,6 +147,7 @@ You can now check that it all works by printing out the node version:
 ```
 	node --version
 ```
+
 
 ####Meteor
 
