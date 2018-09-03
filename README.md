@@ -124,7 +124,7 @@ If the above works, then set up autostart on boot:
 on your server, you'll have to run multiple Mongo instances
 as well to avoid DB collisions!
 
-####NodeJS (LTS v6.9.4)
+####NodeJS (LTS v8.x)
 
 **WARNING**  At this time this is written, with Meteor 1.4, you want to stay with NodeJs v4.x. Otherwise, you may
              experience super-high CPU load on your VM. 
@@ -132,12 +132,25 @@ as well to avoid DB collisions!
 Based on the information [on this
 site](https://nodejs.org/en/download/package-manager/#enterprise-linux-and-fedora), first run:
 ```text
-	curl --silent --location https://rpm.nodesource.com/setup_6.x | sudo bash -
+	curl --silent --location https://rpm.nodesource.com/setup_8.x | sudo bash -
 ```
-and then install with:
+read the instructions that this command lists at the end, which, if present, are more useful than you think, and then install with:
 ```
 	sudo yum -y install nodejs
 ```		
+
+If you need to install a specific version, then you can do:
+```
+	sudo yum -y install nodejs-8.11.1
+```            
+
+This is useful because for a given Meteor version you need to install a particular
+nodejs version. To find out what nodejs version you need, in the Meteor app directory
+(once you have installed Meteor - see next section) run:
+```
+        meteor node -v 
+```
+
 It will also be a good idea to install build tools to be abe to use npm stuff:
 ```
 	sudo yum install gcc-c++ make
