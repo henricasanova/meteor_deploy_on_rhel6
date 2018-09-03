@@ -21,10 +21,11 @@ Initial Setup
 --------
 
 So you got a brand new (virtual) machine running RHEL (Red Hat Enterprise Linux) 6. Let's
-assume your machine has a fixed IP and a one or more DNS 
+assume your machine has a fixed IP and one or more DNS 
 entry (e.g., _server1.ics.hawaii.edu_). 
 
 The first thing to do is to ssh to the machine and change the root password:
+
 ```text
 	su              (enter the old root passwd)
 	passwd          (enter the old and new root password)
@@ -45,10 +46,13 @@ Still as root, you now want to add john to the list of sudoers so that you can i
 	visudo
 ```
 This will open a terminal text editor (should be vim). In the file being edited, below the line:
+
 ```
 	root        ALL=(ALL)       ALL
 ```
+
 add a line:
+
 ```
 	john        ALL=(ALL)       ALL
 ```
@@ -65,12 +69,13 @@ Easy-peasy:
 ```
 	sudo yum install httpd
 ```			
-You can then start
-apache:
+You can then start apache:
+
 ```
 	sudo service httpd start
 ```
 and to make sure it's running (listening on port 80):
+
 ```
 	sudo netstat -tulpn | grep :80
 ```
@@ -78,6 +83,7 @@ and to make sure it's running (listening on port 80):
 
 
 If the above works, then enable autostart:
+
 ```
 	sudo chkconfig httpd on
 ```
@@ -88,6 +94,7 @@ If the above works, then enable autostart:
 Based on the information [on this
 site](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-red-hat/),
 first create a _/etc/yum.repos.d/mongodb-org-3.4.repo_  file:
+
 ```
 	sudo vi /etc/yum.repos.d/mongodb-org-3.4.repo
 ```
@@ -102,20 +109,24 @@ enabled=1
 gpgkey=https://www.mongodb.org/static/pgp/server-3.4.asc
 ```
 Once that's done, simply type:
+
 ```text
 	sudo yum install -y mongodb-org
 ```
 which will install MongoDB.  You can then start mongo:
+
 ```text
 	sudo service mongod start
 ```
 and to make sure it's running (listening on port 27017):
+
 ```text
 	sudo netstat -tulpn | grep :27017
 ```
 (which should produce one line with "LISTEN" in it)
 
 If the above works, then set up autostart on boot:
+
 ```text
 	sudo chkconfig mongod on
 ```
@@ -126,20 +137,22 @@ as well to avoid DB collisions!
 
 ####NodeJS (LTS v8.x)
 
-**WARNING**  At this time this is written, with Meteor 1.4, you want to stay with NodeJs v4.x. Otherwise, you may
-             experience super-high CPU load on your VM. 
+**WARNING**  You have to insall the version of NodeJS that will work with your Meteor installation (more details below).
 
 Based on the information [on this
 site](https://nodejs.org/en/download/package-manager/#enterprise-linux-and-fedora), first run:
+
 ```text
 	curl --silent --location https://rpm.nodesource.com/setup_8.x | sudo bash -
 ```
 read the instructions that this command lists at the end, which, if present, are more useful than you think, and then install with:
+
 ```
 	sudo yum -y install nodejs
 ```		
 
 If you need to install a specific version, then you can do:
+
 ```
 	sudo yum -y install nodejs-8.11.1
 ```            
@@ -152,11 +165,13 @@ nodejs version. To find out what nodejs version you need, in the Meteor app dire
 ```
 
 It will also be a good idea to install build tools to be abe to use npm stuff:
+
 ```
 	sudo yum install gcc-c++ make
 ```
 
 You can now check that it all works by printing out the node version:
+
 ```
 	node --version
 ```
@@ -165,6 +180,7 @@ You can now check that it all works by printing out the node version:
 ####Meteor
 
 Easiest of all:
+
 ```text
 	curl https://install.meteor.com/ | sudo sh
 ```
@@ -174,7 +190,9 @@ Easiest of all:
 Building the Meteor Bundle
 -----------
 
-Let us assume the Meteor app is in a directory _/home/john/meteor_app_ (i.e., this directory has the directories named client, server, public, etc.). Typically, this directory would be checked out from some github. Building the bundle in /home/john/ is easy:
+Let us assume the Meteor app is in a directory _/home/john/meteor_app_ (i.e., this directory has the directories named client, server, public, etc.). Typically, this directory would be checked out from some github. Building the bundle
+ in /home/john/ is easy:
+ 
 ```
 	cd /home/john/meteor_app/
 	cd app/
@@ -206,6 +224,7 @@ Manually Running the Meteor App
 ------------
 
 To test that the Meteor app is running, you can now do:
+
 ```
 	cd /home/john/bundle
 	node main.js
@@ -229,20 +248,24 @@ to serve multiple Meteor apps. The setup is pretty straightforward.
 First you need to open port 80 via software firewall rules. You can do this
 by hand easily. As root, edit file _/etc/sysconfig/iptables_ and add
 a line
+
 ```
 -A INPUT -p tcp -m tcp --dport 80 -j ACCEPT
 ```
 right before the line
+
 ```
 -A INPUT -j REJECT --reject-with icmp-host-prohibited
 ```
 
 Once that's done, restart the iptables service:
+
 ```
 sudo service iptables restart
 ```
 
 To check that this works, restart Apache:
+
 ```
 sudo service httpd restart
 ```
@@ -256,7 +279,8 @@ Welcome page.
 On RHEL, the Security layer (Security-Enhanced Linux) will prohibit 
 Apache to initiate an "outbound" connection, even to localhost! 
 If SELinux is not enabled on your system, you can skip this. Othersilde,
-To enable Apache to connect to a local application fo:
+To enable Apache to connect to a local application do:
+
 ```text
 sudo /usr/sbin/setsebool -P httpd_can_network_connect 1
 ```
@@ -277,16 +301,19 @@ First, let's **uncomment** the following line in _/etc/httpd/conf/httpd.conf_:
 
 Let's use the setting in the previous section os that the URL will look to
 the user as:
+
 ```
 http://server1.ics.hawaii.edu/my_meteor_app
 ```
 and the application is in fact running at:
+
 ```
 http://localhost:1234/my_meteor_app
 ```
 
 This is accomplished by adding the following to (the
 end of) the Apache config file _/etc/httpd/conf/httpd.conf_:
+
 ```
 <VirtualHost *:80>
         ServerName server1.ics.hawaii.edu
@@ -363,14 +390,17 @@ section of this file will one day replace with RHEL7 stuff, but for now, we're s
 #### Create a user for your service
 
 We'll run the service as a particular user (not root), to avoid problems. So let's create a new user:
+
 ```text
 	sudo adduser my_meteor_app
 ```	
 Then, let's create a my_meteor_app group:
+
 ```text
 	sudo groupadd my_meteor_app
 ```
 and finally let's add our user to it:
+
 ```text
 	sudo usermod -a -G my_meteor_app my_meteor_app
 ```
@@ -378,6 +408,7 @@ and finally let's add our user to it:
 #### Install forever via nmp
 
 Forever is a useful program to run Node applications as daemons:
+
 ```text
 sudo npm -g install forever
 ```
@@ -392,10 +423,12 @@ a good template to use.
 
 
 We can now check that the script works:
+
 ```
 	sudo service my_meteor_app start
 ```
 and to make sure it's running (listening on port 1234, as specified in our config file above):
+
 ```
 	sudo netstat -tulpn | grep :1234
 ```
@@ -403,6 +436,7 @@ and to make sure it's running (listening on port 1234, as specified in our confi
 
 
 If the above works, then enable autostart:
+
 ```
 	sudo chkconfig my_meteor_app on
 ```
